@@ -1,0 +1,102 @@
+[
+    {
+        "id": "28e2da395dee20c0",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "d1a659fb06218e75",
+        "type": "inject",
+        "z": "28e2da395dee20c0",
+        "name": "Injection",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "1",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 460,
+        "wires": [
+            [
+                "295ad135540acc18"
+            ]
+        ]
+    },
+    {
+        "id": "23121c978e579cc3",
+        "type": "debug",
+        "z": "28e2da395dee20c0",
+        "name": "Output",
+        "active": false,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 780,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "62880c67a820bcd0",
+        "type": "function",
+        "z": "28e2da395dee20c0",
+        "name": "Process function",
+        "func": "//Calculate Heat Index based on the Temperature and Humidity.\nfunction HeatIndex(temperature, humidity) {\n    // Using a simplified formula for the Heat Index.\n    let heatIndex = temperature + (0.33 * humidity) - 0.7;\n\n    //Determine LED Light State based on the Heat Index.\n    if (heatIndex < 27) {\n        return \"White\";\n    } else if (heatIndex >= 27 && heatIndex < 32) {\n        return \"Yellow\";\n    } else if (heatIndex >= 32 && heatIndex < 41) {\n        return \"Orange\";\n    } else if (heatIndex >= 41 && heatIndex < 54) {\n        return \"Dark Orange\";\n    } else {\n        return \"Red\";\n    }\n}\n\n//Calculate Light State based on Light and Motion.\nfunction LightState(motion) {\n    if (motion === true) {\n        return \"On\";\n    } else {\n        return \"Off\";\n    }\n}\n\nfunction EnvironmentState(light) {\n    if (light >= 100000) {\n        return \"Bright Summer Day\";\n    } else if (light >= 10000) {\n        return \"Full Daylight\";\n    } else if (light >= 1000) {\n        return \"Overcast Day\";\n    } else if (light >= 300) {\n        return \"Traditional Office Lighting\";\n    } else if (light >= 50) {\n        return \"Common Stairway\";\n    } else if (light >= 10) {\n        return \"Twilight\";\n    } else {\n        return \"Full Moon\";\n    }\n}\n\n// let data = msg.payload;\n\n// data.forEach(item => {\n//     let temperature = item.temperature;\n//     let humidity = item.humidity;\n//     item[\"LED Light State\"] = HeatIndex(temperature, humidity);\n\n//     let light = item.light;\n//     let motion = item.motion;\n//     item[\"Normal Light State\"] = LightState(light);\n//     item[\"Environment State\"] = EnvironmentState(light);\n// });\n\nlet input = msg.payload;\nlet data = input[input.length - 1];\nlet temperature = data.temperature;\nlet humidity = data.humidity;\ndata[\"LED Light State\"] = HeatIndex(temperature, humidity);\n\nlet light = data.light;\nlet motion = data.motion;\ndata[\"Normal Light State\"] = LightState(light);\ndata[\"Environment State\"] = EnvironmentState(light);\n\n\nmsg.payload = data;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 460,
+        "wires": [
+            [
+                "23121c978e579cc3"
+            ]
+        ]
+    },
+    {
+        "id": "295ad135540acc18",
+        "type": "mongodb-aleph-in",
+        "z": "28e2da395dee20c0",
+        "mongodb": "f8b4b89d85c74556",
+        "name": "Read Data",
+        "collection": "sensordatas",
+        "operation": "find",
+        "x": 350,
+        "y": 460,
+        "wires": [
+            [
+                "62880c67a820bcd0"
+            ]
+        ]
+    },
+    {
+        "id": "f8b4b89d85c74556",
+        "type": "mongodb-aleph-config",
+        "hostname": "taskd.qpg3v.mongodb.net",
+        "topology": "dnscluster",
+        "connectOptions": "",
+        "port": "27017",
+        "db": "test",
+        "name": "My DB"
+    }
+]
